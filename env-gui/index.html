@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dart Services environment</title>
+  <style>
+    :root {
+      --bg: #e6e1d6;
+      --ink: #1c1915;
+      --muted: #5e584f;
+      --line: #cfc6b8;
+      --panel: #f6f3ec;
+      --panel-2: #efeae1;
+      --accent: #b84316;
+      --accent-ink: #fff8f3;
+      --ok: #1f6b45;
+      --warn: #8a4b12;
+      --danger: #8f2d2d;
+      --preview: #221f1b;
+      --preview-ink: #f3ecdf;
+      --shadow: 0 18px 50px rgba(48, 36, 22, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 220px),
+        var(--bg);
+      font: 16px/1.45 "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+
+    button, input, select { font: inherit; color: inherit; }
+
+    .wrap {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0 48px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-end;
+      margin-bottom: 22px;
+    }
+
+    .mark {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .mark svg { flex: none; }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 650;
+      letter-spacing: -0.03em;
+    }
+
+    .lede {
+      margin: 4px 0 0;
+      color: var(--muted);
+      max-width: 62ch;
+    }
+
+    code {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    .file-pill {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.45);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 13px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: var(--shadow);
+      border-radius: 18px;
+    }
+
+    form { padding: 22px; }
+
+    fieldset {
+      border: 0;
+      margin: 0 0 22px;
+      padding: 0;
+    }
+
+    legend, .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hint.warn { color: var(--warn); }
+
+    .sdk-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sdk-row input { position: absolute; opacity: 0; pointer-events: none; }
+
+    .sdk-row label {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 999px;
+      padding: 7px 12px;
+      cursor: pointer;
+    }
+
+    .sdk-row input:checked + span,
+    .sdk-row label:has(input:checked) {
+      background: var(--ink);
+      color: #f7f3ea;
+      border-color: var(--ink);
+    }
+
+    .sdk-row label:has(input:focus-visible) {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      width: 100%;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+    }
+
+    select:focus, input:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding-top: 4px;
+    }
+
+    .status {
+      min-height: 1.4em;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--danger); }
+
+    .buttons { display: flex; gap: 8px; }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.45; cursor: default; }
+
+    #discard {
+      background: transparent;
+      border: 1px solid var(--line);
+    }
+
+    #save {
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 650;
+    }
+
+    #save:focus-visible, #discard:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+    }
+
+    .preview {
+      padding: 18px 18px 16px;
+      color: var(--preview-ink);
+      background: var(--preview);
+      min-height: 100%;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #c8bba8;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 13.5px/1.55 Consolas, "Cascadia Mono", monospace;
+    }
+
+    @media (max-width: 800px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .layout, .split, .actions { grid-template-columns: 1fr; display: grid; }
+      .buttons { justify-content: stretch; }
+      .buttons button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="mark">
+        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
+          <rect width="36" height="36" rx="10" fill="#1c1915"/>
+          <path d="M9 24.5V11.5h4.2l4.8 8.2 4.8-8.2H27v13h-3.2v-7.3l-4.1 7.3h-3.4l-4.1-7.3v7.3H9z" fill="#f3ecdf"/>
+        </svg>
+        <div>
+          <h1>Environment</h1>
+          <p class="lede">Change the simulator settings and save them back to <code>.env.example</code>. Comments stay in place. Docker Compose reads <code>.env</code>, so copy this file over when you want the stack to pick up the new values.</p>
+        </div>
+      </div>
+      <div class="file-pill">.env.example</div>
+    </header>
+
+    <div class="layout">
+      <section class="panel">
+        <form id="editor">
+          <fieldset>
+            <legend>SDK version</legend>
+            <div class="sdk-row" id="sdk-row"></div>
+            <p class="hint">Image tag for the simulator. The file comment lists sdk2 through sdk5.</p>
+          </fieldset>
+
+          <fieldset>
+            <label class="field-label" for="robot">Robot model</label>
+            <select id="robot" name="ROBOT_MODEL"></select>
+            <p class="hint" id="robot-hint">P3020 is listed for sdk4 and above.</p>
+          </fieldset>
+
+          <div class="split">
+            <fieldset>
+              <label class="field-label" for="cpu">Simulator CPU</label>
+              <input id="cpu" name="SIMULATOR_CPU" type="number" min="0.1" max="128" step="any" required>
+              <p class="hint">Cores given to the simulator container.</p>
+            </fieldset>
+            <fieldset>
+              <label class="field-label" for="memory">Simulator memory</label>
+              <input id="memory" name="SIMULATOR_MEMORY" type="text" list="memory-sizes" required spellcheck="false" autocomplete="off">
+              <datalist id="memory-sizes">
+                <option value="2g"></option>
+                <option value="4g"></option>
+                <option value="8g"></option>
+                <option value="16g"></option>
+              </datalist>
+              <p class="hint">Docker size, such as 8g or 512m.</p>
+            </fieldset>
+          </div>
+
+          <div class="actions">
+            <p class="status" id="status" role="status"></p>
+            <div class="buttons">
+              <button type="button" id="discard" disabled>Discard</button>
+              <button type="submit" id="save" disabled>Save changes</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <aside class="panel preview">
+        <h2>File preview</h2>
+        <pre id="preview">Loading…</pre>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const SDK_CHOICES = ["sdk2", "sdk3", "sdk4", "sdk5", "sdk6", "sdk7"];
+    const MODEL_GROUPS = [
+      ["M series", ["M0609", "M0617", "M1013", "M1509"]],
+      ["A series", ["A0509", "A0912"]],
+      ["H series", ["H2017", "H2515"]],
+      ["E series", ["E0509"]],
+      ["P series", ["P3020"]],
+    ];
+    const KNOWN_MODELS = new Set(MODEL_GROUPS.flatMap(([, models]) => models));
+
+    const sdkRow = document.getElementById("sdk-row");
+    const robot = document.getElementById("robot");
+    const cpu = document.getElementById("cpu");
+    const memory = document.getElementById("memory");
+    const preview = document.getElementById("preview");
+    const status = document.getElementById("status");
+    const saveButton = document.getElementById("save");
+    const discardButton = document.getElementById("discard");
+    const robotHint = document.getElementById("robot-hint");
+    const form = document.getElementById("editor");
+
+    let baseline = null;
+    let previewTimer = 0;
+
+    function setStatus(message, kind) {
+      status.textContent = message;
+      status.className = "status" + (kind ? " " + kind : "");
+    }
+
+    function values() {
+      const sdk = form.querySelector("input[name='SDK_VERSION']:checked");
+      return {
+        SDK_VERSION: sdk ? sdk.value : "",
+        ROBOT_MODEL: robot.value,
+        SIMULATOR_CPU: cpu.value.trim(),
+        SIMULATOR_MEMORY: memory.value.trim(),
+      };
+    }
+
+    function same(left, right) {
+      return JSON.stringify(left) === JSON.stringify(right);
+    }
+
+    function refreshActions() {
+      const dirty = !!(baseline && !same(values(), baseline));
+      saveButton.disabled = !dirty;
+      discardButton.disabled = !dirty;
+      if (dirty) setStatus("Unsaved changes");
+      else if (!status.classList.contains("ok")) setStatus("");
+      return dirty;
+    }
+
+    function renderSdk(selected) {
+      const choices = SDK_CHOICES.includes(selected) ? SDK_CHOICES : SDK_CHOICES.concat(selected);
+      sdkRow.replaceChildren();
+      for (const version of choices) {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "SDK_VERSION";
+        input.value = version;
+        input.checked = version === selected;
+        const text = document.createElement("span");
+        text.textContent = version;
+        label.append(input, text);
+        sdkRow.append(label);
+      }
+    }
+
+    function renderModels(selected) {
+      robot.replaceChildren();
+      const present = new Set(KNOWN_MODELS);
+      for (const [groupName, models] of MODEL_GROUPS) {
+        const group = document.createElement("optgroup");
+        group.label = groupName;
+        for (const model of models) {
+          const option = document.createElement("option");
+          option.value = model;
+          option.textContent = model;
+          group.append(option);
+        }
+        robot.append(group);
+      }
+      if (selected && !present.has(selected)) {
+        const option = document.createElement("option");
+        option.value = selected;
+        option.textContent = selected;
+        robot.append(option);
+      }
+      robot.value = selected;
+    }
+
+    function updateRobotHint() {
+      const sdk = values().SDK_VERSION;
+      const early = sdk === "sdk2" || sdk === "sdk3";
+      if (robot.value === "P3020" && early) {
+        robotHint.textContent = "P3020 is listed for sdk4 and above. This SDK may not include it.";
+        robotHint.classList.add("warn");
+      } else {
+        robotHint.textContent = "P3020 is listed for sdk4 and above.";
+        robotHint.classList.remove("warn");
+      }
+    }
+
+    async function refreshPreview() {
+      if (!baseline) return;
+      try {
+        const response = await fetch("/api/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ values: values() }),
+        });
+        const data = await response.json();
+        if (!response.ok) return;
+        preview.textContent = data.raw;
+      } catch {
+        preview.textContent = "Preview unavailable.";
+      }
+    }
+
+    function schedulePreview() {
+      updateRobotHint();
+      refreshActions();
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(refreshPreview, 120);
+    }
+
+    function apply(next) {
+      renderSdk(next.SDK_VERSION || "sdk5");
+      renderModels(next.ROBOT_MODEL || "M1013");
+      cpu.value = next.SIMULATOR_CPU || "";
+      memory.value = next.SIMULATOR_MEMORY || "";
+      updateRobotHint();
+      refreshActions();
+    }
+
+    async function load() {
+      setStatus("Loading file…");
+      saveButton.disabled = true;
+      discardButton.disabled = true;
+      try {
+        const response = await fetch("/api/env");
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not read the file.");
+        baseline = data.values;
+        preview.textContent = data.raw;
+        apply(baseline);
+        setStatus("");
+      } catch (error) {
+        setStatus(error.message + " Start it with python env-gui/server.py", "err");
+        preview.textContent = "The editor server is not running.";
+      }
+    }
+
+    form.addEventListener("input", schedulePreview);
+    form.addEventListener("change", schedulePreview);
+
+    discardButton.addEventListener("click", () => {
+      if (!baseline) return;
+      apply(baseline);
+      refreshPreview();
+      setStatus("Restored the saved values");
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!baseline || same(values(), baseline)) return;
+      saveButton.disabled = true;
+      setStatus("Saving…");
+      try {
+        const response = await fetch("/api/env", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ values: values() }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Save failed.");
+        baseline = data.values;
+        preview.textContent = data.raw;
+        apply(baseline);
+        setStatus("Saved .env.example", "ok");
+      } catch (error) {
+        setStatus(error.message, "err");
+        saveButton.disabled = false;
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>
